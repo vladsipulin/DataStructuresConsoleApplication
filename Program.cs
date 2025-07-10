@@ -1,4 +1,6 @@
-﻿Console.WriteLine("Hello, World!");
+﻿using System.Collections.Generic;
+
+Console.WriteLine("Hello, World!");
 Console.WriteLine("=== СТЕК ===");
 Stack<int> stack = new Stack<int>();
 for (int i = 0; i < 11; i++)
@@ -43,6 +45,33 @@ Console.WriteLine("\nСвязанный список после удаления
 foreach (int i in list)
 {
     Console.Write(i + "\t");
+}
+
+Console.WriteLine("\n=== ДВУСВЯЗАННЫЙ СПИСОК ===");
+DoubleLinkedList<int> dblist = new DoubleLinkedList<int>();
+for (int i = 0; i < 11; i++)
+{
+    dblist.Add(i);
+}
+dblist.Add(5); // добавим ещё элемент, чтобы в списке было два узла с Data: 5
+Console.WriteLine("Двусвязанный список с элементами от начала:");
+foreach (int i in dblist)
+{
+    Console.Write(i + "\t");
+}
+dblist.Remove(5); // тогда метод списка должен удалить все элементы, которые имеют Data: 5
+dblist.Remove(6);
+Console.WriteLine("\nДвусвязанный список после удаления элементов 5 и 6:");
+foreach (int i in dblist)
+{
+    Console.Write(i + "\t");
+}
+
+Console.WriteLine("\nДвусвязанный список с элементами от конца:");
+// вывод элементов с конца списка
+foreach (var t in dblist.BackEnumerator())
+{
+    Console.Write(t+"\t");
 }
 
 // Класс СТЭК - это такая структура данных, в которой
@@ -305,6 +334,124 @@ class LinkedList<T> : IEnumerable<T>
         {
             yield return current.Data;
             current = current.Next;
+        }
+    }
+}
+
+class DoubleNode<T>()
+{
+    public T Data { get; set; }
+    public DoubleNode<T> Next { get; set; }
+    public DoubleNode<T> Previous { get; set; }
+}
+
+// Класс ДВУСВЯЗАННЫЙ СПИСОК – структура данных, в которой
+// элементов списка является Узел (Node), хранящий
+// данные (data), информацию о следующем узле (Next) и предыдущем узле (Previous)
+// Плюсом этого списка является возможность обходить элементы с конца, а не только с начала списка
+class DoubleLinkedList<T> : IEnumerable<T>
+{
+    public int Length { get; set; }
+    public DoubleNode<T> Head { get; set; }
+    public DoubleNode<T> Tail { get; set; }
+
+    public void Add(T item)
+    {
+        DoubleNode<T> newNode = new DoubleNode<T>();
+        newNode.Data = item;
+
+        if (Head == null)
+        {
+            Head = newNode;
+        }
+        else
+        {
+            Tail.Next = newNode; // записываем в свойство хвостового элемента, что после него есть новый узел (иначе будет значение null у Tail)
+            newNode.Previous = Tail; // а новому узлу говорим, что перед ним стоит бывший ранее хвостовой Узел
+                                     // (если не сделать, то не будет инфы о предыдущих узлах в двусвязанном списке) 
+        }
+        Tail = newNode; // так как элементы добавляются в конец, то каждый новый добавленный элемент становится хвостовым
+        Console.WriteLine("Элемент " + newNode.Data + " добавлен в список");
+        Length++;
+    }
+
+    public void Remove(T item)
+    {
+        DoubleNode<T>? current = Head;
+
+        while (current != null && current.Data != null)
+        {
+            // данные в узле совпадают с искомыми данными?
+            if (current.Data.Equals(item))
+            {
+                // предыдущый узел известен?
+                if (current.Previous != null)
+                {
+                    // если след. узел - хвостовой, то в свойство Tail списка указываем на это
+                    if (current.Next == null)
+                    {
+                        Tail = current.Previous;
+                        Tail.Next = null;
+                    }
+                    else
+                    {
+                        current.Previous.Next = current.Next;
+                        current.Next.Previous = current.Previous;
+                    }
+                }
+                else
+                {
+                    // если у текущего узла нет предыдущего (является головным узлом)
+                    // то записываем информацию о следующем узле из свойства Head текущего списка
+                    Head = Head?.Next;
+
+                    // если элемент являлся единственным в списке и мы его удалили
+                    // то в списке свойства Head и Tail будут иметь значения null
+                    if (Head == null)
+                        Tail = null;
+                }
+
+                // уменьшаем длину списка 
+                Length--;
+            }
+
+            //переходим на следующий узел списка
+            current = current.Next;
+        }
+    }
+
+    // очистка списка
+    public void Clear()
+    {
+        Head = null;
+        Tail = null;
+        Length = 0;
+    }
+
+    // поддержка связанным списокм цикла foreach путем реализации интерфейса IEnumerable<T>
+    public System.Collections.IEnumerator GetEnumerator()
+    {
+        return ((IEnumerable<T>)this).GetEnumerator();
+    }
+
+    IEnumerator<T> IEnumerable<T>.GetEnumerator()
+    {
+        DoubleNode<T>? current = Head;
+        while (current != null)
+        {
+            yield return current.Data;
+            current = current.Next;
+        }
+    }
+
+    // обход с конца списка благодаря свойству Previous
+    public IEnumerable<T> BackEnumerator()
+    {
+        DoubleNode<T> current = Tail;
+        while (current != null)
+        {
+            yield return current.Data;
+            current = current.Previous;
         }
     }
 }
